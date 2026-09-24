@@ -1,0 +1,201 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "Digital product purchase order record containing fulfillment and expiring download details",
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Unique purchase order identifier",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "customerEmail": {
+          "type": "string",
+          "description": "Buyer email address receiving the digital product and receipt",
+          "maxLength": 128
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Buyer full name or username",
+          "maxLength": 100
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth user ID of the buyer if authenticated",
+          "maxLength": 128
+        },
+        "productId": {
+          "type": "string",
+          "description": "Identifier of the digital asset purchased",
+          "maxLength": 64
+        },
+        "productTitle": {
+          "type": "string",
+          "description": "Title of the purchased digital asset",
+          "maxLength": 150
+        },
+        "productCategory": {
+          "type": "string",
+          "description": "Category of the product",
+          "enum": ["ebook", "asset_pack", "software", "audio", "template"]
+        },
+        "amount": {
+          "type": "number",
+          "description": "Order purchase total amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 Currency code",
+          "maxLength": 5
+        },
+        "status": {
+          "type": "string",
+          "description": "Fulfillment status of the order",
+          "enum": ["completed", "delivered", "refunded"]
+        },
+        "downloadToken": {
+          "type": "string",
+          "description": "Cryptographic or opaque expiring download token",
+          "maxLength": 128
+        },
+        "downloadExpiresAt": {
+          "type": "string",
+          "description": "ISO timestamp when the download link expires",
+          "maxLength": 40
+        },
+        "downloadUrl": {
+          "type": "string",
+          "description": "Expiring download link endpoint",
+          "maxLength": 500
+        },
+        "downloadCount": {
+          "type": "number",
+          "description": "Times the asset has been downloaded"
+        },
+        "maxDownloads": {
+          "type": "number",
+          "description": "Maximum allowed downloads for this token"
+        },
+        "assetType": {
+          "type": "string",
+          "description": "Format type of the digital deliverable",
+          "enum": ["pdf", "image", "zip", "markdown"]
+        },
+        "assetFileName": {
+          "type": "string",
+          "description": "Physical filename of the downloadable asset",
+          "maxLength": 128
+        },
+        "receiptEmailSent": {
+          "type": "boolean",
+          "description": "Whether receipt email was generated and delivered"
+        },
+        "receiptSentAt": {
+          "type": "string",
+          "description": "Timestamp when the styled receipt email was sent",
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp",
+          "maxLength": 40
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp",
+          "maxLength": 40
+        }
+      },
+      "required": ["orderId", "customerEmail", "productId", "productTitle", "amount", "currency", "status"]
+    },
+    "UserSecurity": {
+      "title": "UserSecurity",
+      "description": "Two-factor authentication and security preferences for a buyer account",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth user ID",
+          "maxLength": 128
+        },
+        "twoFactorEnabled": {
+          "type": "boolean",
+          "description": "Whether two-factor authentication is active"
+        },
+        "twoFactorMethod": {
+          "type": "string",
+          "description": "2FA verification method",
+          "enum": ["totp_authenticator", "email_code"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when security settings were changed",
+          "maxLength": 40
+        }
+      },
+      "required": ["userId", "twoFactorEnabled"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Digital deliverable product catalog item",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique product SKU / identifier",
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "description": "Product display title",
+          "maxLength": 150
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the digital product",
+          "maxLength": 1000
+        },
+        "category": {
+          "type": "string",
+          "description": "Product classification category",
+          "enum": ["ebook", "asset_pack", "software", "audio", "template"]
+        },
+        "price": {
+          "type": "number",
+          "description": "Default price in USD"
+        },
+        "assetType": {
+          "type": "string",
+          "description": "Deliverable file extension/type",
+          "enum": ["pdf", "image", "zip", "markdown"]
+        },
+        "assetFileName": {
+          "type": "string",
+          "description": "File name of the downloadable asset",
+          "maxLength": 128
+        },
+        "fileSizeBytes": {
+          "type": "number",
+          "description": "Asset file size in bytes"
+        }
+      },
+      "required": ["id", "title", "category", "price", "assetType", "assetFileName"]
+    }
+  },
+  "firestore": {
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Stores digital purchase orders and temporary download entitlements"
+    },
+    "/user_security/{userId}": {
+      "schema": "UserSecurity",
+      "description": "Stores user two-factor authentication flags and preferences"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Stores catalog items available for instant purchase and delivery"
+    }
+  }
+}

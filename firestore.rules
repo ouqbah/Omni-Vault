@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['orderId', 'customerEmail', 'productId', 'productTitle', 'amount', 'currency', 'status'])
+        && data.orderId is string && data.orderId.size() <= 64
+        && data.customerEmail is string && data.customerEmail.size() <= 128
+        && data.productTitle is string && data.productTitle.size() <= 150
+        && data.amount is number && data.amount >= 0
+        && data.currency is string && data.currency.size() <= 5
+        && data.status in ['completed', 'delivered', 'refunded'];
+    }
+
+    function isValidUserSecurity(data) {
+      return data.keys().hasAll(['userId', 'twoFactorEnabled'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.twoFactorEnabled is bool;
+    }
+
+    // Orders Collection: Digital product purchase records and expiring entitlements
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId);
+
+      allow list: if true;
+
+      allow create: if isValidId(orderId) && isValidOrder(incoming());
+
+      allow update: if isValidId(orderId) && isValidOrder(incoming())
+        && incoming().orderId == existing().orderId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['downloadCount', 'downloadToken', 'downloadExpiresAt', 'downloadUrl', 'updatedAt', 'receiptEmailSent', 'receiptHtml']);
+
+      allow delete: if false;
+    }
+
+    // User Security Collection: 2FA preferences
+    match /user_security/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserSecurity(incoming()) && incoming().userId == request.auth.uid;
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserSecurity(incoming())
+        && incoming().userId == existing().userId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['twoFactorEnabled', 'twoFactorMethod', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Products catalog: readable for browsing deliverables
+    match /products/{productId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "OmniVault - Digital Product Delivery & Buyer Dashboard",
+  "description": "Full-stack digital product fulfillment system featuring secure webhook processing, Firestore order logging, expiring signed download links, styled HTML receipts, 2FA, and live order push notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
